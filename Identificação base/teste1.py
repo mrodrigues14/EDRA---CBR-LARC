@@ -1,12 +1,14 @@
 import cv2
 import torch
 from yolov5.models.experimental import attempt_load
+from yolov5.utils.general import non_max_suppression  # Add this line
 from yolov5.utils.torch_utils import select_device
 
 # Carregar o modelo treinado YOLOv5
-weights = 'path/to/your/yolov5/weights.pt'
+weights = 'best(1).pt'
 device = select_device('')  # Use uma GPU disponível, se disponível
-model = attempt_load(weights, map_location=device)
+model = attempt_load(weights)
+model = model.to(device)
 stride = int(model.stride.max())  # Stride máximo para redimensionar corretamente as coordenadas
 
 # Configurações para supressão não máxima

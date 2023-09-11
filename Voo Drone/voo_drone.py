@@ -28,6 +28,9 @@ class OffboardControl(Node):
         self.vehicle_local_position_subscriber = self.create_subscription(
             VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.vehicle_local_position_callback, qos_profile)
 
+        self.target_height = -5.0
+        self.target_x = 0.0
+        self.target_y = 0.0
         self.has_reached_target_height = False
         self.vehicle_local_position = VehicleLocalPosition()
         self.timer = self.create_timer(0.1, self.timer_callback)
@@ -42,11 +45,12 @@ class OffboardControl(Node):
         self.waypoints = [
             {"x": 0.0, "y": 0.0, "z": -5.0},
             {"x": 5.0, "y": 0.0, "z": -5.0},
-            {"x": 5.0, "y": 1.0, "z": -5.0},
-            {"x": 5.0, "y": 5.0, "z": -5.0},
-            {"x": 5.0, "y": 10.0, "z": -5.0},
-            {"x": 5.0, "y": 20.0, "z": -5.0},
-            {"x": 5.0, "y": 30.0, "z": -5.0},
+            {"x": 5.0, "y": 2.0, "z": -5.0},
+            {"x": 1.0, "y": 2.0, "z": -5.0},
+            {"x": 1.0, "y": 4.0, "z": -5.0},
+            {"x": 5.0, "y": 4.0, "z": -5.0},
+            {"x": 5.0, "y": 6.0, "z": -5.0},
+            {"x": 1.0, "y": 6.0, "z": -5.0},
             {"x": 0.0, "y": 0.0, "z": -5.0},
         ]
         self.current_waypoint_index = 0

@@ -32,7 +32,6 @@ class OffboardControl(Node):
         self.target_x = 0.0
         self.target_y = 0.0
         self.has_reached_target_height = False
-        self.vehicle_local_position = VehicleLocalPosition()
         self.timer = self.create_timer(0.1, self.timer_callback)
 
         self.last_log_time = time.time()

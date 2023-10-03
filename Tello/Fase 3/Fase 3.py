@@ -68,6 +68,7 @@ def streaming():
     while True:
         print(tello.get_height())
         img = tello.get_frame_read().frame
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         barcodes = decode(img)
         for barcode in barcodes:
             if barcode.type == "CODE39":

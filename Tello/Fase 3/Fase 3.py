@@ -3,16 +3,11 @@ import cv2
 from pyzbar.pyzbar import decode
 import time
 import threading
-import keyboard
 
-def main():
-    takeOff()
-    adjustHeight()
-    goToShelf()
-    precisionLanding()
 
 def takeOff():
     tello.takeoff()
+
 
 def adjustHeight():
     if tello.get_height() > 120:
@@ -21,8 +16,12 @@ def adjustHeight():
     else:
         altitudeDiference = -(tello.get_height()) - 100
         tello.move_up(altitudeDiference)
+
+
 def goToShelf():
-    tello.move_forward(700)
+    tello.move_forward(500)
+    tello.set_speed(10)
+    tello.move_forward(200)
     while True:
         img = tello.get_frame_read().frame
         barcodes = decode(img)
@@ -34,7 +33,22 @@ def goToShelf():
     tello.move_up(50)
 
     while True:
-        img = tello.get_frame_read().frame
+        barcodes = decode(img)
+        if barcodes:
+            break
+        tello.move_left(10)
+
+    tello.move_left(400)
+    tello.move_up(50)
+    while True:
+        barcodes = decode(img)
+        if barcodes:
+            break
+        tello.move_right(10)
+
+    tello.move_right(400)
+    tello.move_up(50)
+    while True:
         barcodes = decode(img)
         if barcodes:
             break
@@ -42,8 +56,11 @@ def goToShelf():
 
     tello.move_left(400)
 
+
 def precisionLanding():
-    tello.land()
+    tello.rotate_clockwise(180)
+    tello.move_forward(500)
+
 
 def streaming():
     tello.streamon()
@@ -55,9 +72,8 @@ def streaming():
         for barcode in barcodes:
             if barcode.type == "CODE39":
                 barcode_data = barcode.data.decode('utf-8')
-                unique_barcodes.add(barcode_data)  # Add to the set of unique barcodes
+                unique_barcodes.add(barcode_data)
 
-                # Draw the barcode rectangle and text
                 (x, y, w, h) = barcode.rect
                 cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 text = f"{barcode_data}"
@@ -81,12 +97,23 @@ def streaming():
 
     cv2.destroyAllWindows()
 
+
+def main():
+    takeOff()
+    time.sleep(5)
+    adjustHeight()
+    time.sleep(5)
+    goToShelf()
+    time.sleep(5)
+    precisionLanding()
+
+
 if __name__ == "__main__":
     tello = Tello()
     tello.connect()
     print(tello.get_battery())
     streaming_thread = threading.Thread(target=streaming)
     streaming_thread.start()
-    time.sleep(10)
+    time.sleep(8)
     main()
     streaming_thread.join()

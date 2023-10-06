@@ -1,64 +1,53 @@
-from djitellopy import Tello
 import cv2
-import time
+import torch
+from djitellopy import Tello
 import threading
-import numpy as np
+from yolov5.models.experimental import attempt_load
+from yolov5.utils.general import non_max_suppression
+from yolov5.utils.torch_utils import select_device
 
-# Load YOLO model
-net = cv2.dnn.readNet("yolov3.weights", "yolov3.cfg")
-layer_names = net.getLayerNames()
-output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-classes = []
-with open("coco.names", "r") as f:
-    classes = [line.strip() for line in f.readlines()]
+# Carregar o modelo treinado YOLOv5
+weights = 'best.pt'
+device = select_device('')  # Use uma GPU disponível, se disponível
+model = attempt_load(weights, map_location=device)
+model = model.to(device)
+stride = int(model.stride.max())  # Stride máximo para redimensionar corretamente as coordenadas
+
+# Configurações para supressão não máxima
+conf_threshold = 0.3
+iou_threshold = 0.4
 
 def streaming():
     tello.streamon()
     while True:
-        img = tello.get_frame_read().frame
+        frame = tello.get_frame_read().frame
 
-        # YOLO detection
-        height, width, channels = img.shape
-        blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-        net.setInput(blob)
-        outs = net.forward(output_layers)
+        # Detecção de objetos com o YOLOv5
+        img = torch.from_numpy(frame).to(device)
+        img = img.float() / 255.0
+        img = img.permute(2, 0, 1).unsqueeze(0)
 
-        # Information to show on the screen
-        class_ids = []
-        confidences = []
-        boxes = []
+        pred = model(img)[0]
+        pred = non_max_suppression(pred, conf_threshold, iou_threshold)[0]
 
-        for out in outs:
-            for detection in out:
-                scores = detection[5:]
-                class_id = np.argmax(scores)
-                confidence = scores[class_id]
-                if confidence > 0.5:
-                    center_x = int(detection[0] * width)
-                    center_y = int(detection[1] * height)
-                    w = int(detection[2] * width)
-                    h = int(detection[3] * height)
+        if pred is not None and len(pred):
+            for det in pred:
+                x1, y1, x2, y2, conf, cls = det.tolist()
+                label = f'{model.names[int(cls)]} {conf:.2f}'
 
-                    x = int(center_x - w / 2)
-                    y = int(center_y - h / 2)
+                # Desenhar caixa delimitadora e rótulo
+                color = (0, 255, 0)  # Cor da caixa delimitadora (verde)
+                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
+                cv2.putText(frame, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-                    boxes.append([x, y, w, h])
-                    confidences.append(float(confidence))
-                    class_ids.append(class_id)
+                # Controle do drone com base na detecção
+                if label.startswith("base"):
+                    base_center_x = (int(x1) + int(x2)) // 2
+                    base_center_y = (int(y1) + int(y2)) // 2
+                    img_center_x = frame.shape[1] // 2
+                    img_center_y = frame.shape[0] // 2
 
-        indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-
-        # Check if base is detected and adjust drone's position
-        for i in range(len(boxes)):
-            if i in indexes:
-                label = str(classes[class_ids[i]])
-                if label == "base":
-                    base_center_x = boxes[i][0] + boxes[i][2] // 2
-                    base_center_y = boxes[i][1] + boxes[i][3] // 2
-                    img_center_x = width // 2
-                    img_center_y = height // 2
-
-                    threshold = 50  # Adjust as needed
+                    threshold = 50  # Ajuste conforme necessário
 
                     if abs(base_center_x - img_center_x) > threshold:
                         if base_center_x < img_center_x:
@@ -72,17 +61,13 @@ def streaming():
                         else:
                             tello.move_down(20)
 
-                    # If base is centered, land the drone
+                    # Se a base estiver centralizada, pouse o drone
                     if abs(base_center_x - img_center_x) <= threshold and abs(base_center_y - img_center_y) <= threshold:
                         tello.land()
                         return
 
-                # Draw bounding boxes for all detected objects
-                color = (0, 255, 0)
-                cv2.rectangle(img, (boxes[i][0], boxes[i][1]), (boxes[i][0] + boxes[i][2], boxes[i][1] + boxes[i][3]), color, 2)
-                cv2.putText(img, label + " " + str(round(confidences[i], 2)), (boxes[i][0], boxes[i][1] - 10), cv2.FONT_HERSHEY_PLAIN, 1, color, 2)
+        cv2.imshow('YOLOv5 Object Detection', frame)
 
-        cv2.imshow("frame", img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 

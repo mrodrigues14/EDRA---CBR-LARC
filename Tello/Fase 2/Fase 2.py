@@ -35,7 +35,6 @@ def precisionLanding():
 def streaming():
     global current_frame
     tello.streamon()
-    unique_barcodes = set()
     unique_qrcodes = set()  # Set to store unique QR codes
     while True:
         img = tello.get_frame_read().frame

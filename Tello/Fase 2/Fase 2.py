@@ -5,16 +5,18 @@ import time
 import threading
 
 current_frame = None
+targetAltitudeTakeOff = 100
+
 
 def takeOff():
     tello.takeoff()
 
 
 def adjustHeight():
-    if tello.get_height() > 120:
-        altitudeDiference = tello.get_height() - 100
-        tello.move_down(altitudeDiference)
-
+    while tello.get_height() < targetAltitudeTakeOff:
+        altitudeCorrection = targetAltitudeTakeOff - tello.get_height()
+        tello.move_up(altitudeCorrection)
+        break
 
 
 def goToShelf():
@@ -26,10 +28,8 @@ def goToShelf():
     tello.move_back(170)
 
 
-
-def precisionLanding():
-    tello.rotate_clockwise(180)
-    tello.land()
+def landing():
+    tello.send_control_command("land")
 
 
 def streaming():
@@ -73,7 +73,6 @@ def main():
     goToShelf()
 
 
-
 if __name__ == "__main__":
     tello = Tello()
     tello.connect()
@@ -81,5 +80,4 @@ if __name__ == "__main__":
     streaming_thread = threading.Thread(target=streaming)
     streaming_thread.start()
     time.sleep(8)
-    tello.send_control_command("land")
     streaming_thread.join()

@@ -1,55 +1,40 @@
 import time
-
-import cv2
-import torch
 from djitellopy import Tello
-import threading
-
-
-targetAltitude = 100
-
 
 def takeOff():
     tello.takeoff()
 
-def adjustHeight():
-    while tello.get_height() < targetAltitude:
-        altitudeCorrection = targetAltitude - tello.get_height()
-        tello.move_up(altitudeCorrection)
-        break
-
 
 def flightToBase():
-    tello.set_speed(80)
-    tello.move_forward(400)
-    tello.move_forward(190)
+    tello.set_speed(40)
+    tello.move_up(40)
+    tello.move_left(25)
+    tello.move_forward(100)
+    tello.move_forward(100)
+    tello.move_forward(100)
+    tello.move_forward(100)
+    tello.move_forward(100)
+    tello.move_forward(70)
     tello.land()
     tello.takeoff()
-    tello.rotate_counter_clockwise(90)
-    tello.move_forward(250)
-    tello.rotate_counter_clockwise(90)
-    tello.move_forward(400)
-    tello.move_forward(200)
+    tello.move_up(40)
+    tello.move_left(250)
+    tello.move_forward(100)
+    tello.move_forward(100)
+    tello.move_forward(100)
+    tello.move_forward(100)
+    tello.move_back(145)
     tello.land()
     tello.takeoff()
-    tello.rotate_counter_clockwise(90)
-    tello.move_forward(275)
-    tello.land()
+    tello.move_right(100)
+    tello.move_right(100)
+    tello.move_right(75)
 
 
-def testeLanding1():
+def landing():
     tello.takeoff()
     time.sleep(5)
     tello.land()
-
-def testeLanding2():
-    tello.takeoff()
-    time.sleep(5)
-    tello.send_control_command("land")
-
-
-def streaming():
-    tello.streamon()
 
 
 if __name__ == "__main__":
@@ -58,8 +43,5 @@ if __name__ == "__main__":
     print(tello.get_battery())
     tello.takeoff()
     time.sleep(5)
-    adjustHeight()
-    time.sleep(5)
     flightToBase()
-
-    tello.turn_motor_off()
+    time.sleep(5)

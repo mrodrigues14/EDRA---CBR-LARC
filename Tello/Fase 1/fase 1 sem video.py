@@ -23,7 +23,8 @@ def flightToBase():
     tello.move_back(100)
     tello.move_back(100)
     tello.move_back(100)
-    tello.move_back(145)
+    tello.move_back(100)
+    tello.move_back(45)
     tello.land()
     tello.takeoff()
     tello.move_right(100)
@@ -32,8 +33,6 @@ def flightToBase():
 
 
 def landing():
-    tello.takeoff()
-    time.sleep(5)
     tello.land()
 
 
@@ -45,3 +44,4 @@ if __name__ == "__main__":
     time.sleep(5)
     flightToBase()
     time.sleep(5)
+    landing()

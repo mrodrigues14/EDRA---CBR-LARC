@@ -7,8 +7,10 @@ import threading
 current_frame = None
 targetAltitudeTakeOff = 100
 
+
 def takeOff():
     tello.takeoff()
+    tello.flip("f")
 
 
 def adjustHeight():
@@ -39,18 +41,22 @@ def returnToBase():
     tello.move_back(170)
     tello.move_back(400)
 
+
 def landing():
     tello.send_control_command("land")
-
 
 def streaming():
     global current_frame
     tello.streamon()
     unique_barcodes = set()
     while True:
-        img = tello.get_frame_read().frame
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        barcodes = decode(img)
+        original_img = tello.get_frame_read().frame
+        img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
+        barcodes = decode(img)  # Realiza a detecção na imagem original
+
+        # Ajusta o brilho e contraste após a detecção
+        img = cv2.convertScaleAbs(img, alpha=1.5, beta=40)
+
         for barcode in barcodes:
             if barcode.type == "CODE39":
                 barcode_data = barcode.data.decode('utf-8')
@@ -59,7 +65,6 @@ def streaming():
                 cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 text = f"{barcode_data}"
                 cv2.putText(img, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
 
         # Display the count and list of unique barcodes on the screen
         info_text = f"Quantidade de códigos de barra detectados: {len(unique_barcodes)}"
@@ -90,5 +95,3 @@ if __name__ == "__main__":
     returnToBase()
     tello.land()
     streaming_thread.join()
-    tello.streamoff()
-

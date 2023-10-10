@@ -1,0 +1,20 @@
+Considerar pedir emprestado versão antiga espelinho
+
+
+Warm Up 3
+
+Testes:
+
+1. Testar detecção de barcode com medidas passadas no último teste;
+2. Caso erro, identificar paramêtros com erro(fps, velocidade ou conexão); Considerar antena wifi usb.
+3. Caso sucesso, repetir mesmo código e passar para a proxima fase;
+4. Testar fase 2, distância necessária para identificação dos qrcodes, implementar uma função para cada bloco;
+5. Verificar erros, identificar possíveis soluções;
+
+Warm Up 4
+
+1. Fase 1
+2. Fase 2
+3. Fase 3
+
+Em sequência

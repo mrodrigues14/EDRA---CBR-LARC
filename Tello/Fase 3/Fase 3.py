@@ -2,15 +2,12 @@ from djitellopy import Tello
 import cv2
 from pyzbar.pyzbar import decode
 import time
+from djitellopy import Tello
 import threading
-
-current_frame = None
-targetAltitudeTakeOff = 100
 
 
 def takeOff():
     tello.takeoff()
-    tello.flip("f")
 
 
 def adjustHeight():
@@ -21,29 +18,62 @@ def adjustHeight():
         break
 
 
+def mover_passo(distancia, passo, direcao):
+    distancia_passo = int(distancia / passo)
+
+    if (direcao == "esquerda"):
+        for i in range(distancia_passo):
+            tello.move_left(passo)
+
+    if (direcao == "direita"):
+        for i in range(distancia_passo):
+            tello.move_right(passo)
+
+    if (direcao == "frente"):
+        for i in range(distancia_passo):
+            tello.move_forward(passo)
+
+    if (direcao == "tras"):
+        for i in range(distancia_passo):
+            tello.move_back(passo)
+
+
 def flightPlan1():
-    tello.move_forward(400)
-    tello.move_left(185)
-    tello.move_forward(175)
+    mover_passo(400, 100, "frente")
+    mover_passo(185, 35, "esquerda")
+    mover_passo(175, 55, "frente")
+
     tello.set_speed(30)
-    tello.move_left(310)
-    tello.move_up(65)
-    tello.move_right(310)
-    tello.move_up(65)
-    tello.move_left(310)
-    tello.move_up(65)
-    tello.move_right(310)
+    mover_passo(312, 26, "esquerda")
+    tello.move_up(60)
+    mover_passo(312, 26, "direita")
+    tello.move_up(55)
+    mover_passo(312, 26, "esquerda")
+    tello.move_up(55)
+    mover_passo(312, 26, "direita")
+
+    time.sleep(2)
+
+    mover_passo(312, 26, "esquerda")
+    tello.move_down(55)
+    mover_passo(312, 26, "direita")
+    tello.move_down(55)
+    mover_passo(312, 26, "esquerda")
+    tello.move_down(65)
+    mover_passo(312, 26, "direita")
 
 
 def returnToBase():
+    tello.move_up(150)
     tello.set_speed(80)
     tello.move_right(150)
-    tello.move_back(170)
-    tello.move_back(400)
+    mover_passo(150, 50, "direita")
+    mover_passo(600, 100, "tras")
 
 
 def landing():
     tello.send_control_command("land")
+
 
 def streaming():
     global current_frame
@@ -55,7 +85,7 @@ def streaming():
         barcodes = decode(img)  # Realiza a detecção na imagem original
 
         # Ajusta o brilho e contraste após a detecção
-        img = cv2.convertScaleAbs(img, alpha=1.5, beta=40)
+        img = cv2.convertScaleAbs(img, alpha=1.5, beta=25)
 
         for barcode in barcodes:
             if barcode.type == "CODE39":
@@ -81,17 +111,29 @@ def streaming():
     cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    tello = Tello()
-    tello.connect()
+def main():
     print(tello.get_battery())
     streaming_thread = threading.Thread(target=streaming)
     streaming_thread.start()
-    time.sleep(8)
+    time.sleep(5)
     takeOff()
-    time.sleep(2)
+    time.sleep(3)
     flightPlan1()
-    time.sleep(2)
     returnToBase()
-    tello.land()
+    time.sleep(3)
+    landing()
     streaming_thread.join()
+
+
+if __name__ == "__main__":
+
+    tello = Tello()
+    tello.connect()
+
+    while True:
+        try:
+            main()
+        except:
+            continue
+        else:
+            break
